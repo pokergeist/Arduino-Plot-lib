@@ -10,15 +10,6 @@ This library calculates exponential moving averages (EMA) where the value is bia
 
 The Plot class helps you generate and accumulate variable strings to be sent to the Arduino IDE's Serial Plotter.
 
-## AFS_MPU9250
-
-This developing library supports the MPU-9250 9-DOF Motion Processing Unit/IMU, with the components derived from the Adafruit_Sensor type. Additional features are:
-
-* access to the AK8963 Magnetometer sensor configuration and data registers
-* ability to configure the MPU-9250's data ready interrupt signal which can be polled or associate with an interrupt handler
-* ability to configure the MPU-9250's slave device configuration register for populating its External Sensor Data registers
-* access to the individual Adafruit Sensor objects.
-
 ## AsyncTimer2
 
 This is a clone of Luis Llamas' [AsyncTimerLib](https://github.com/luisllamasbinaburo/Arduino-AsyncTimer).
@@ -30,3 +21,19 @@ I tinkered with the constructors and default parameters to suit me, added an opt
 ## MemTest
 
 This gives you a simple way to monitor free memory usage. It sends a notice to the Console anytime there's a reduction in Free Memory.
+
+## Device Drivers
+
+### AFS_MPU9250
+
+This developing library supports the MPU-9250 9-DOF Motion Processing Unit/IMU, with the components derived from the Adafruit_Sensor type. Additional features are:
+
+* access to the AK8963 Magnetometer sensor configuration and data registers
+* ability to configure the MPU-9250's data ready interrupt signal which can be polled or associate with an interrupt handler
+* ability to configure the MPU-9250's slave device configuration register for populating its External Sensor Data registers
+* access to the individual Adafruit Sensor objects.
+
+### Cirque GlidePoint (Pinnacle) Trackpad
+
+* Reads Absolute or Relative trackpad data over SPI or I2C.
+* Configured for small microcontrollers (e.g, Adafruit QT Py)
