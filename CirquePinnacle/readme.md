@@ -65,7 +65,7 @@ data_mode_t data_mode = DATA_MODE_ABS;
 | CirquePinnacleSPI.cpp       | Contains the Register Access Protocol (RAP) methods using SPI. |
 | CirquePinnacleI2C.h         | Creates the child class CirquePinnacleI2C as an alternative to using SPI. |
 | CirquePinnacleI2C.cpp       | Contains the Register Access Protocol (RAP) methods using I2C. |
-| examples/../cirque_demo.ino | This is the example sketch that creates a CirquePinnacle child class the polls the DR line, reads and prints the data. (*) |
+| examples/../cirque_demo.ino | This is the example sketch that creates an instance of a CirquePinnacle child class, then polls the DR line, reads and prints the data. (*) |
 
 \* The button data for both Absolute and Relative readings is suspiciously static with no activations at the moment.
 
@@ -89,7 +89,7 @@ The constructors allow you to override default parameters that will be applied w
 | ERA_WriteByte()   | Write to an Extended Register Address.                       |
 | ClipCoordinates() | Clips raw coordinates to "reachable" window of sensor.       |
 | ScaleData()       | Scales data to desired X & Y resolution.                     |
-| Data_Ready()      | Check the Data Ready line for new data. xxxxxxxxxxxxxxxx     |
+| Data_Ready()      | Check the Data Ready line for new data. If the DR lines is not wired, the DR flag in the Status register is checked. |
 | Invert_Y()        | Inverts the Y-Axis. Now better implemented with the c'tor override. |
 | Get_ID()          | Retrieves the chip and firmware version, and the product ID. |
 | SetFlag()         | A utility routine for setting and clearing flags in a register word. |
@@ -102,7 +102,7 @@ I have to recognize the contributions of Cirque and to a greater extent Ryan You
 
 * Resolve the button data issue. The data was very dynamic and seemingly useless before. I either fixed or broke something.
 
-## Notes on Style ...
+## Notes on Style
 
 ### Streaming
 
