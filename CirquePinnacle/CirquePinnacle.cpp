@@ -24,7 +24,7 @@ void CirquePinnacle::Set_Config_Values(uint8_t cfgFeed1, uint8_t cfgFeed2) {
   use_cfg_values = true;
 }
 
-void CirquePinnacle::begin(int8_t dataReadyPin) {
+uint8_t CirquePinnacle::begin(int8_t dataReadyPin) {
   data_ready_pin = dataReadyPin;
   if (data_ready_pin >= 0) pinMode(data_ready_pin, INPUT);
   if (use_cfg_values) {
@@ -32,6 +32,7 @@ void CirquePinnacle::begin(int8_t dataReadyPin) {
   } else {
     Pinnacle_Init(); // use pre-configured values with c'tor overrides
   }
+  return 0;
 }
 
 // this init routine uses pre-configured values with c'tor overrides applied

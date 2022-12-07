@@ -11,12 +11,12 @@ CirquePinnacleSPI::CirquePinnacleSPI(uint8_t zIdleCount,  data_mode_t dataMode, 
 
 CirquePinnacleSPI::~CirquePinnacleSPI() { }
 
-void CirquePinnacleSPI::begin(int8_t dataReadyPin, uint8_t selectPin, uint32_t spiSpeed) {
+uint8_t CirquePinnacleSPI::begin(int8_t dataReadyPin, uint8_t selectPin, uint32_t spiSpeed) {
   select_pin = selectPin;
   spi_speed  = spiSpeed;
   pinMode(select_pin, OUTPUT);
   SPI.begin();
-  CirquePinnacle::begin(dataReadyPin);
+  return CirquePinnacle::begin(dataReadyPin);
 }
 
 /*  RAP Functions */

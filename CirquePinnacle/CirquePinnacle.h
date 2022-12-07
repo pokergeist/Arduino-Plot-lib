@@ -171,7 +171,7 @@ class CirquePinnacle {
 public:
    CirquePinnacle(uint8_t z_idle_count=Z_IDLE_COUNT, data_mode_t data_mode=DATA_MODE_ABS, bool y_invert=false);
   ~CirquePinnacle();
-  void begin(int8_t data_ready_pin);        // sets attribues and calls Pinnacle_Init()
+  uint8_t begin(int8_t data_ready_pin);     // sets attribues and calls Pinnacle_Init()
   void Pinnacle_Init(void);                 // sets configuration registers
   void Pinnacle_Init(bool disableFeed);     // sets configuration registers using Set_Config_* data
   void GetAbsoluteData(absData_t& absData); // captures an Absolute data read

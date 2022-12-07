@@ -23,7 +23,7 @@ class CirquePinnacleI2C : public virtual CirquePinnacle {
 public:
    CirquePinnacleI2C(uint8_t z_idle_count=Z_IDLE_COUNT, data_mode_t data_mode=DATA_MODE_ABS, bool y_invert=false);
   ~CirquePinnacleI2C();
-  void begin(int8_t dataReadyPin, uint8_t address=CIRQUE_PINNACLE_DEFAULT_I2C_ADDRESS);
+  uint8_t begin(int8_t dataReadyPin, uint8_t address=CIRQUE_PINNACLE_DEFAULT_I2C_ADDRESS);
 }; // class CirquePinnacleI2C
 
 #endif // _H

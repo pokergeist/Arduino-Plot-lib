@@ -11,10 +11,14 @@ CirquePinnacleI2C::CirquePinnacleI2C(uint8_t zIdleCount,  data_mode_t dataMode, 
 
 CirquePinnacleI2C::~CirquePinnacleI2C() { }
 
-void CirquePinnacleI2C::begin(int8_t dataReadyPin, uint8_t address) {
+uint8_t CirquePinnacleI2C::begin(int8_t dataReadyPin, uint8_t address) {
   i2c_addr = address;
   Wire.begin();
-  CirquePinnacle::begin(dataReadyPin);
+  // i2c ping
+  Wire.beginTransmission(i2c_addr);
+  int status = Wire.endTransmission();
+  if (status) return status;
+  return CirquePinnacle::begin(dataReadyPin);
 }
 
 /*  RAP Functions */
@@ -35,10 +39,10 @@ void CirquePinnacleI2C::RAP_ReadBytes(pinnacle_register_t address, uint8_t * dat
 // Writes single-byte <data> to <address>
 void CirquePinnacleI2C::RAP_Write(pinnacle_register_t address, uint8_t data) {
   uint8_t cmdByte = WRITE_MASK | address;  // Form the WRITE command byte
-  Wire.beginTransmission(i2c_addr);   // Set up an I2C-write to the I2C slave (Pinnacle)
-  Wire.write(cmdByte);                  // Signal a RAP-write operation at <address>
-  Wire.write(data);                     // Write <data> to I2C slave
-  Wire.endTransmission();               // I2C w/ stop condition
+  Wire.beginTransmission(i2c_addr); // Set up an I2C-write to the I2C slave (Pinnacle)
+  Wire.write(cmdByte);              // Signal a RAP-write operation at <address>
+  Wire.write(data);                 // Write <data> to I2C slave
+  Wire.endTransmission();           // I2C w/ stop condition
 }
 
 // CirquePinnacleI2C.cpp

@@ -57,7 +57,16 @@ void setup(void) {
 #ifdef USING_SPI
   trackpad.begin(CIRQUE_DATA_READY_PIN, SPI_SELECT_PIN, SPI_SPEED_MAX);
 #else
-  trackpad.begin(CIRQUE_DATA_READY_PIN); // ,addr=default I2C address)
+  uint8_t status = 7;
+  while (status) {
+    uint8_t status = trackpad.begin(CIRQUE_DATA_READY_PIN); // ,addr=default I2C address)
+    if (status == 2) {
+      Serial << "I2C address ACK error - trackpad not answering." << endl;
+    } else {
+      Serial << "Unknown error " << status << "returned by I2C trackpad." << endl;
+    }
+    delay(5e3);
+  }
 #endif
   print_ID();
 }
