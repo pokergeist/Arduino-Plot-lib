@@ -2,9 +2,14 @@
 
 ## Status
 
-I'm working to resolve some coding errors - **DO NOT USE THE LIBRARY AT THIS TIME**.
+The (known) existing bugs have been eliminated. Feel free to try the code.
 
-It mostly works by accident, but there are some needed fixes on the way. 
+**Recent Changes**:
+
+* I added a Button_Decode() method the break out the button names for a good column-based disaply.
+* I'm working on the Set_Config_Values() method to allow greater access to the configuration values, This code is largely untested.
+
+I'll be running a free memory test when that's all tested and working, and test auto-clearing of the DR line and Status register flag.
 
 ## Intro
 
@@ -12,7 +17,7 @@ This library is meant to facilitate the use of a Cirque GlidePoint trackpad. In 
 
 ## Data Notification
 
-The Pinnacle provide a Data Ready signal either as an active low data line, or as a Status register flag. You can either poll the I/O pin or the Data Ready flag in the Status register. An interrupt service routine was considered by not deemed necessary for now.
+The Pinnacle provide a Data Ready (DR) signal either as a Status register flag (SW_DR) or as an active high hardware data line (HW_DR). The SW_DR flag sets the HW_DR line. You can either poll the I/O pin or the Data Ready flag in the Status register. The AP Note says you have to clear the DR flag in the Status register to drop the DR line. I thought another reference said the DR line would be dropped on a data read. I'll test that later.  The  An interrupt service routine was considered by not deemed necessary for now.
 
 ## Testing Hardware
 
@@ -126,6 +131,7 @@ The constructors allow you to override default parameters that will be applied w
 | Data_Ready()      | Check the Data Ready line for new data. If the DR lines is not wired, the DR flag in the Status register is checked. |
 | Invert_Y()        | Inverts the Y-Axis. Now better implemented with the c'tor override. |
 | Get_ID()          | Retrieves the chip and firmware version, and the product ID. (*) |
+| Button_Decode     | Decodes the button status into a String for display.         |
 | SetFlag()         | A utility routine for setting and clearing flags in a register word. |
 
 \* I could not find a lookup-table for any of these values. I get:

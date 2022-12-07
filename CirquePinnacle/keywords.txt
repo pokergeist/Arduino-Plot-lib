@@ -16,6 +16,7 @@ begin	KEYWORD2
 ClearFlags	KEYWORD2
 ClipCoordinates	KEYWORD2
 Data_Ready	KEYWORD2
+Decode_Buttons	KEYWORD2
 ERA_ReadBytes	KEYWORD2
 ERA_WriteByte	KEYWORD2
 EnableFeed	KEYWORD2
@@ -27,6 +28,7 @@ Pinnacle_Init	KEYWORD2
 RAP_ReadBytes	KEYWORD2
 RAP_Write	KEYWORD2
 ScaleData	KEYWORD2
+Set_Config_Values	KEYWORD2
 SetFlag	KEYWORD2
 
 #######################################
