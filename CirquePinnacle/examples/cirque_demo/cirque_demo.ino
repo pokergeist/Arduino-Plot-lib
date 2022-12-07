@@ -34,31 +34,32 @@
   #include <CirquePinnacleI2C.h>
 #endif
 
-// Select the preferred data mode
-data_mode_t data_mode = DATA_MODE_ABS;
-// data_mode_t data_mode = DATA_MODE_REL;
+// Select the preferred data mode, 1 or true for Absolute, 0 or false for Relative
+data_mode_t data_mode = (1) ? DATA_MODE_ABS : DATA_MODE_REL;
 
 #include <Streaming.h>
 
 absData_t trackpadAbsData;
 relData_t trackpadRelData;
 
+#define MY_Z_IDLE_COUNT  1
+
 #ifdef USING_SPI
-  CirquePinnacleSPI trackpad(1, data_mode, true);   // overrides for Z idle count and invert Y data
+  CirquePinnacleSPI trackpad(MY_Z_IDLE_COUNT, data_mode, true);   // overrides for Z idle count and invert Y data
 #else
-  CirquePinnacleI2C trackpad(1, data_mode, true);   // overrides for Z idle count and invert Y data
+  CirquePinnacleI2C trackpad(MY_Z_IDLE_COUNT, data_mode, true);   // overrides for Z idle count and invert Y data
 #endif
 
 void setup(void) {
   Serial.begin(9600);
-  while (not Serial and millis() < 10e3);
+  while (not Serial and millis() < 10e3); // wait up to 10secs for an open Console
+  setMyConfigVars();  // set my configuration parameters before begin() is called
 #ifdef USING_SPI
   trackpad.begin(CIRQUE_DATA_READY_PIN, SPI_SELECT_PIN, SPI_SPEED_MAX);
 #else
   trackpad.begin(CIRQUE_DATA_READY_PIN); // ,addr=default I2C address)
 #endif
   print_ID();
-  delay(500);
 }
 
 void loop(void) {
@@ -72,7 +73,7 @@ void loop(void) {
     }
     trackpad.ScaleData(trackpadAbsData, 1024, 1024);  // Scale coordinates to arbitrary X, Y resolution
   }
-  delay(10);
+  // delay(5);
 }
 
 // print an Absolute data read
@@ -82,7 +83,7 @@ void print_trackpad_abs_data(void) {
     << "\t" << trackpadAbsData.yValue
     << "\t" << trackpadAbsData.zValue
     << "\t" << trackpadAbsData.touchDown
-    << "\tb" << String((trackpadAbsData.buttonFlags+0x80) >> 3, BIN) << endl;
+    << "\t" << trackpad.Decode_Buttons(trackpadAbsData.buttonFlags) << endl;
 }
 
 // print a Relative data read
@@ -91,16 +92,27 @@ void print_trackpad_rel_data(void) {
   Serial    << trackpadRelData.x
     << "\t" << trackpadRelData.y
     << "\t" << trackpadRelData.scroll
-    << "\tb" << String(trackpadRelData.buttons+0x08, BIN) << endl;
+    << "\t" << trackpad.Decode_Buttons(trackpadRelData.buttons) << endl;
 }
 
 // just read and print chip and firmware info
 void print_ID() {
   uint8_t chip_id, fw_ver, product_id;
   trackpad.Get_ID(chip_id, fw_ver, product_id);
-  Serial << "Chip ID: 0x" << _HEX(chip_id)
-         << " Firmware Version: 0x" << _HEX(fw_ver)
-         << " Product ID: 0x" << _HEX(product_id) << endl;
+  Serial << "Chip ID:0x" << _HEX(chip_id)
+         << " Firmware Version:0x" << _HEX(fw_ver)
+         << " Product ID:0x" << _HEX(product_id) << endl;
+}
+
+// user set their own config vars
+// Z idle cont set from c'tor
+void setMyConfigVars(void) {
+  uint8_t cfg_feed1, cfg_feed2;
+  cfg_feed1 =   PINNACLE_FLG_FEED1_Y_DATA_INVERT
+              | ((data_mode == DATA_MODE_ABS) ? PINNACLE_FLG_FEED1_DATA_MODE : 0)
+              | PINNACLE_FLG_FEED1_FEED_ENABLE;
+  cfg_feed2 = PINNACLE_FLG_FEED1_FEED_ENABLE; // all taps enabled
+  trackpad.Set_Config_Values(cfg_feed1, cfg_feed2);  // sets values and flag for Init call
 }
 
 // cirque_demo.ino

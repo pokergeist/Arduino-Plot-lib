@@ -17,29 +17,53 @@ CirquePinnacle::CirquePinnacle(uint8_t zIdleCount,  data_mode_t dataMode, bool y
 
 CirquePinnacle::~CirquePinnacle() { }
 
-void CirquePinnacle::begin(int8_t dataReadyPin) {
-  data_ready_pin = dataReadyPin;
-  Pinnacle_Init();
+
+void CirquePinnacle::Set_Config_Values(uint8_t cfgFeed1, uint8_t cfgFeed2) {
+  cfg_feed1 = cfgFeed1;
+  cfg_feed2 = cfgFeed2;
+  use_cfg_values = true;
 }
 
-void CirquePinnacle::Pinnacle_Init(void) {
-  if (data_ready_pin != -1) {
-    pinMode(data_ready_pin, INPUT);
+void CirquePinnacle::begin(int8_t dataReadyPin) {
+  data_ready_pin = dataReadyPin;
+  if (data_ready_pin >= 0) pinMode(data_ready_pin, INPUT);
+  if (use_cfg_values) {
+    Pinnacle_Init(false);
+  } else {
+    Pinnacle_Init(); // use pre-configured values with c'tor overrides
   }
-  // Host clears SW_CC flag
+}
+
+// this init routine uses pre-configured values with c'tor overrides applied
+void CirquePinnacle::Pinnacle_Init(void) {
+  // clear SW_CC & SW_DR flags
   ClearFlags();
-  RAP_Write(PINNACLE_REG_SYS_CONFIG, PINNACLE_VAL_STATUS_CLEAR);
-  // feed cfg 1
-  uint8_t feed1 = DATA_MODE_ABS ? PINNACLE_VAL_FEED1_CFG_ABS1 : PINNACLE_VAL_FEED1_CFG_REL;
+    // set feed cfg 1 register value
+  uint8_t feed1 = (data_mode == DATA_MODE_ABS) ? PINNACLE_VAL_FEED1_CFG_ABS1 : PINNACLE_VAL_FEED1_CFG_REL;
   SetFlag(feed1, PINNACLE_FLG_FEED1_Y_DATA_INVERT, y_invert);
   SetFlag(feed1, PINNACLE_FLG_FEED1_DATA_MODE, data_mode);
-  // Host enables preferred output mode
-  RAP_Write(PINNACLE_REG_FEED_CONFIG_1, feed1);
-  // feed cfg 2
-  uint8_t feed2 = DATA_MODE_ABS ? PINNACLE_VAL_FEED2_CFG_ABS  : PINNACLE_VAL_FEED2_CFG_REL;
-  RAP_Write(PINNACLE_REG_FEED_CONFIG_2, feed2);
-  // Host sets z-idle packet count
+    // set z-idle packet count
   RAP_Write(PINNACLE_REG_Z_IDLE, z_idle_count);
+    // set feed cfg 2 register value and apply
+  uint8_t feed2 = (data_mode == DATA_MODE_ABS) ? PINNACLE_VAL_FEED2_CFG_ABS  : PINNACLE_VAL_FEED2_CFG_REL;
+  RAP_Write(PINNACLE_REG_FEED_CONFIG_2, feed2);
+    // apply feed cfg 1 register value
+  RAP_Write(PINNACLE_REG_FEED_CONFIG_1, feed1); // set feed enable last
+}
+
+// this init routine uses values privided via SetFlag()
+void CirquePinnacle::Pinnacle_Init(bool disableFeed) {
+  if (disableFeed) EnableFeed(false);
+  // set data mode from config data
+  data_mode = (cfg_feed1 & PINNACLE_FLG_FEED1_DATA_MODE);
+  // clear SW_CC & SW_DR flags
+  ClearFlags();
+  // set z-idle packet count
+  RAP_Write(PINNACLE_REG_Z_IDLE, z_idle_count);
+  // feed cfg 2
+  RAP_Write(PINNACLE_REG_FEED_CONFIG_2, cfg_feed2);
+  // feed cfg 1
+  RAP_Write(PINNACLE_REG_FEED_CONFIG_1, cfg_feed1); // set feed enable last
 }
 
 // Reads XYZ data from Pinnacle registers 0x14 through 0x17
@@ -154,7 +178,7 @@ void CirquePinnacle::ScaleData(absData_t& coordinates, uint16_t xResolution, uin
 }
 
 bool CirquePinnacle::Data_Ready() {
-  if (data_ready_pin > 0) return digitalRead(data_ready_pin);
+  if (data_ready_pin >= 0) return digitalRead(data_ready_pin); // active high
   // else check Status register
   uint8_t status;
   RAP_ReadBytes(PINNACLE_REG_STATUS, &status, 1);
@@ -172,6 +196,23 @@ void CirquePinnacle::Get_ID(uint8_t& chip_id, uint8_t& firmware_version, uint8_t
   RAP_ReadBytes(PINNACLE_REG_ASIC_ID, & chip_id, 1);
   RAP_ReadBytes(PINNACLE_REG_FIRMWARE_VERSION, & firmware_version, 1);
   RAP_ReadBytes(PINNACLE_REG_PRODUCT_ID, & product_id, 1);
+}
+
+String CirquePinnacle::Decode_Buttons(uint8_t buttonData) {
+  String s;
+  if (data_mode == DATA_MODE_REL) {
+    s  = ((buttonData & PINNACLE_FLG_REL_BUTTON_PRIMARY)   ?  "PRI" :  "-p-");
+    s += ((buttonData & PINNACLE_FLG_REL_BUTTON_SECONDARY) ? " SEC" : " -s-");
+    s += ((buttonData & PINNACLE_FLG_REL_BUTTON_AUXILLARY) ? " AUX" : " -a-"); // caller terminates line
+  } else {
+    s  = ((buttonData & PINNACLE_FLG_ABS_SWITCH_0) ?  "0" :  "-");
+    s += ((buttonData & PINNACLE_FLG_ABS_SWITCH_1) ? " 1" : " -");
+    s += ((buttonData & PINNACLE_FLG_ABS_SWITCH_2) ? " 2" : " -");
+    s += ((buttonData & PINNACLE_FLG_ABS_SWITCH_2) ? " 3" : " -");
+    s += ((buttonData & PINNACLE_FLG_ABS_SWITCH_2) ? " 4" : " -");
+    s += ((buttonData & PINNACLE_FLG_ABS_SWITCH_2) ? " 5" : " -"); // caller terminates line
+  }
+  return s; // "return value optimization" - deleted in caller code when exiting scope
 }
 
 void CirquePinnacle::SetFlag(uint8_t& value, uint8_t flag, bool test) {

@@ -1,5 +1,9 @@
 # Cirque Pinnacle Arduino Lib
 
+## Intro
+
+This library is meant to facilitate the use of a Cirque GlidePoint trackpad. In this case, specifically ones using the Gen3 (or Gen2?) Pinnacle ASIC.
+
 ## Status
 
 The (known) existing bugs have been eliminated. Feel free to try the code.
@@ -7,17 +11,11 @@ The (known) existing bugs have been eliminated. Feel free to try the code.
 **Recent Changes**:
 
 * I added a Button_Decode() method the break out the button names for a good column-based disaply.
-* I'm working on the Set_Config_Values() method to allow greater access to the configuration values, This code is largely untested.
-
-I'll be running a free memory test when that's all tested and working, and test auto-clearing of the DR line and Status register flag.
-
-## Intro
-
-This library is meant to facilitate the use of a Cirque GlidePoint trackpad. In this case, specifically ones using the Gen3 (or Gen2?) Pinnacle ASIC.
+* I added Set_Config_Values() to provided a better way to apply configuration setting. This is my preferred method of setting up the device though the user has to do a bit more work.
 
 ## Data Notification
 
-The Pinnacle provide a Data Ready (DR) signal either as a Status register flag (SW_DR) or as an active high hardware data line (HW_DR). The SW_DR flag sets the HW_DR line. You can either poll the I/O pin or the Data Ready flag in the Status register. The AP Note says you have to clear the DR flag in the Status register to drop the DR line. I thought another reference said the DR line would be dropped on a data read. I'll test that later.  The  An interrupt service routine was considered by not deemed necessary for now.
+The Pinnacle provide a Data Ready (DR) signal either as a Status register flag (SW_DR) or as an active high hardware data line (HW_DR). The SW_DR flag sets the HW_DR line. You can either poll the I/O pin or the Data Ready flag in the Status register. You have to clear the DR flag in the Status register to drop the DR line  - neither DR signal is dropped on a data read. I'll test that later.  The  An interrupt service routine was considered by not deemed necessary for now.
 
 ## Testing Hardware
 
@@ -35,7 +33,7 @@ The default I2C address is 0x2A once resistor R1 is removed from the TM035035-20
 
 Per [CirquePinnacle.readthedocs.io](https://cirquepinnacle.readthedocs.io/en/latest/) "you could change the I2C address from `0x2A` to `0x2C` by soldering a 470KΩ resistor at the junction labeled ADR [address], although this is untested".
 
-![ADR resistor](assets/ADR-resistor.png)
+<img src="assets/ADR-resistor.png" alt="ADR resistor" style="zoom: 80%;" />
 
 You could also use an I2C [multiplexor](https://www.adafruit.com/product/2717) that allows you to switch the I2C buss between different devices with the same address.
 
@@ -59,7 +57,7 @@ Model TMyyyxxx-202i-cco decomposes to:
 
 Cirque’s circle trackpads ship with the newer non-AG (Advanced Gestures) variant of the Pinnacle touch controller ASIC.
 
-Mouser has excellent hi-res photos available on their search and product pages.
+Mouser has excellent hi-res photos available on their [search](https://mou.sr/3UCy1Wj) and product pages.
 
 ## example/../cirque_demo.ino
 
@@ -84,7 +82,7 @@ Next, define which pins are being used (if any).
 | :-------------------: | ------------------------------------------------------------ |
 |    SPI_SELECT_PIN     | This is the SPI Slave/Chip Select output line that connects to the Pinnacle's SS line which enables the Pinnacle to communicate on the SPI buss. |
 | CIRQUE_DATA_READY_PIN | This is the pin connected to the Pinnacle's DR (/Data Ready) active low output that signals when new feed data is ready. If this pin is not wired set the value to -1 (<0) to check the Status register DR flag instead. |
-|     SPI_SPEED_MAX     | This is the SPI clock speed that will be used for SPI communications. 10Mbps seems to be a good speed for current microcontroller. |
+|     SPI_SPEED_MAX     | This is the SPI clock speed that will be used for SPI communications. 10Mbps seems to be a good speed for current microcontrollers. |
 
 Both Absolute and Relative data modes are supported (but not concurrently at this time).
 
@@ -104,9 +102,7 @@ data_mode_t data_mode = DATA_MODE_ABS;
 | CirquePinnacleSPI.cpp       | Contains the Register Access Protocol (RAP) methods using SPI. |
 | CirquePinnacleI2C.h         | Creates the child class CirquePinnacleI2C as an alternative to using SPI. |
 | CirquePinnacleI2C.cpp       | Contains the Register Access Protocol (RAP) methods using I2C. |
-| examples/../cirque_demo.ino | This is the example sketch that creates an instance of a CirquePinnacle child class, then polls the DR line, reads and prints the data. (*) |
-
-\* The button data for both Absolute and Relative readings is suspiciously static with no activations at the moment.
+| examples/../cirque_demo.ino | This is the example sketch that creates an instance of a CirquePinnacle child class, then polls the DR line, reads and prints the data. |
 
 ## Library/Driver Code
 
@@ -116,23 +112,25 @@ The constructors allow you to override default parameters that will be applied w
 
 ### Methods etc.
 
-| Method            | Description                                                  |
-| ----------------- | ------------------------------------------------------------ |
-| begin()           | Because it's an Arduino thing.                               |
-| Pinnacle_Init()   | Called by begin() to set the configuration registers.        |
-| GetAbsoluteData() | Pass your structure by reference to get the latest Absolute dataset. |
-| GetRelativeData() | Pass your structure by reference to get the latest Relative dataset. |
-| ClearFlags()      | Called frequently to clear the CC and DR flags in the Status Register. |
-| EnableFeed()      | Used to disable then re-enable the feed for certain operations. |
-| ERA_ReadBytes()   | Read bytes from an Extended Register Address.                |
-| ERA_WriteByte()   | Write to an Extended Register Address.                       |
-| ClipCoordinates() | Clips raw coordinates to "reachable" window of sensor.       |
-| ScaleData()       | Scales data to desired X & Y resolution.                     |
-| Data_Ready()      | Check the Data Ready line for new data. If the DR lines is not wired, the DR flag in the Status register is checked. |
-| Invert_Y()        | Inverts the Y-Axis. Now better implemented with the c'tor override. |
-| Get_ID()          | Retrieves the chip and firmware version, and the product ID. (*) |
-| Button_Decode     | Decodes the button status into a String for display.         |
-| SetFlag()         | A utility routine for setting and clearing flags in a register word. |
+| Method                     | Description                                                  |
+| -------------------------- | ------------------------------------------------------------ |
+| begin()                    | Because it's an Arduino thing.                               |
+| Set_Config_Values()        | Set the feed 1 and 2 config register values that will be used when begin() is called. |
+| Pinnacle_Init()            | Called by begin() to set the configuration registers. This method uses pre-configured values modified by constructor overrides. |
+| Pinnacle_Init(disableFeed) | Called by begin() to set the configuration registers if the values have been set using Set_Config_Values(). |
+| GetAbsoluteData()          | Pass your structure by reference to get the latest Absolute dataset. |
+| GetRelativeData()          | Pass your structure by reference to get the latest Relative dataset. |
+| ClearFlags()               | Called frequently to clear the CC and DR flags in the Status Register. |
+| EnableFeed()               | Used to disable then re-enable the feed for certain operations. |
+| ERA_ReadBytes()            | Read bytes from an Extended Register Address.                |
+| ERA_WriteByte()            | Write to an Extended Register Address.                       |
+| ClipCoordinates()          | Clips raw coordinates to "reachable" window of sensor.       |
+| ScaleData()                | Scales data to desired X & Y resolution.                     |
+| Data_Ready()               | Check the Data Ready line for new data. If the DR lines is not wired, the DR flag in the Status register is checked. |
+| Invert_Y()                 | Inverts the Y-Axis. Now better implemented with the c'tor override or the Set_Config_Values() method. |
+| Get_ID()                   | Retrieves the chip and firmware version, and the product ID. (*) |
+| Button_Decode              | Decodes the button status into a String for display.         |
+| SetFlag()                  | A utility routine for setting and clearing flags in a register word. |
 
 \* I could not find a lookup-table for any of these values. I get:
 
@@ -146,7 +144,15 @@ I have to recognize the contributions of Cirque and to a greater extent Ryan You
 
 ## ToDo
 
-* Resolve the button data issue. The data was very dynamic and seemingly useless before. I either fixed or broke something.
+* nothing pending
+
+## Timing
+
+With no delay() calls and the data feed running at the max rate of 100 samples/second (10ms), data acquisition is very responsive with most of the time spent waiting for new data. This is a measurement of the DR line spent high vs. low. This is using the slower I2C interface.<img src="assets/fast-read-metrics.png" alt="metrics" style="zoom:150%;" />
+
+and a scope trace (50ms divisions, Absolute data mode).
+
+![trace](assets/fast-read.png)
 
 ## Notes on Style
 

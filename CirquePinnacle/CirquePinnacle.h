@@ -26,7 +26,7 @@ enum pinnacle_register_t {
 	PINNACLE_REG_SYS_CONFIG       = 0x03,
 	PINNACLE_REG_FEED_CONFIG_1    = 0x04,
 	PINNACLE_REG_FEED_CONFIG_2    = 0x05,
-	PINNACLE_REG_FEED_CONFIG_3    = 0x06,
+	PINNACLE_REG_RESERVED_06      = 0x06,
 	PINNACLE_REG_CAL_CONFIG_1     = 0x07,
 	PINNACLE_REG_PS2_AUX_CNTL     = 0x08,
 	PINNACLE_REG_SAMPLE_RATE      = 0x09,
@@ -91,6 +91,17 @@ enum pinnacle_register_t {
 #define PINNACLE_FLG_ERA_CONTROL_READ             0b00000001
 #define PINNACLE_VAL_ERA_CONTROL_CFG_RD_RDAI  0x05
 
+#define PINNACLE_FLG_REL_BUTTON_AUXILLARY         0b00000100
+#define PINNACLE_FLG_REL_BUTTON_SECONDARY         0b00000010
+#define PINNACLE_FLG_REL_BUTTON_PRIMARY           0b00000001
+
+#define PINNACLE_FLG_ABS_SWITCH_5                 0b00100000
+#define PINNACLE_FLG_ABS_SWITCH_4                 0b00010000
+#define PINNACLE_FLG_ABS_SWITCH_3                 0b00001000
+#define PINNACLE_FLG_ABS_SWITCH_2                 0b00000100
+#define PINNACLE_FLG_ABS_SWITCH_1                 0b00000010
+#define PINNACLE_FLG_ABS_SWITCH_0                 0b00000001
+
 #define PINNACLE_TRACKPAD_ABS_DATA_LEN  6
 #define PINNACLE_TRACKPAD_REL_DATA_LEN  4
 
@@ -140,6 +151,10 @@ class CirquePinnacle {
   uint8_t z_idle_count;
   bool    y_invert;
   bool    data_mode;
+  // configuration register values
+  bool    use_cfg_values;
+  uint8_t cfg_feed1;
+  uint8_t cfg_feed2;
 
   int8_t data_ready_pin;
   // absData_t touchData;
@@ -158,6 +173,7 @@ public:
   ~CirquePinnacle();
   void begin(int8_t data_ready_pin);        // sets attribues and calls Pinnacle_Init()
   void Pinnacle_Init(void);                 // sets configuration registers
+  void Pinnacle_Init(bool disableFeed);     // sets configuration registers using Set_Config_* data
   void GetAbsoluteData(absData_t& absData); // captures an Absolute data read
   void GetRelativeData(relData_t& relData); // captures a Relative data read
   void ClearFlags();                        // clears command_complete and data_ready flags
@@ -167,6 +183,11 @@ public:
   bool Data_Ready();                        // check the data_ready line or status flag
   void Invert_Y(bool invert);               // invert the Absolute Y values (or set in c'tor)
   void Get_ID(uint8_t& chip_id, uint8_t& firmware_version, uint8_t& product_id);
+  String Decode_Buttons(uint8_t buttonData);   // list active buttons
+  // Set Config Register Values first then call begin() or Pinnacle_Init(disableFeed)
+  void Set_Config_Values(uint8_t cfg_feed1, uint8_t cfg_feed2);
+
+  static
   void SetFlag(uint8_t& value, uint8_t flag, bool test); // utility for setting and clearing register flags
 }; // class CirquePinnacle
 
