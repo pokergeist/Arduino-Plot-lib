@@ -14,13 +14,39 @@ I'm using a Cirque GlidePoint TM035035-2024 Pinnacle based circular trackpad to 
 
 ## Interface Notes
 
+SPI is recommended by Cirque as it is faster and easier to access multiple trackpads with the same controller.	
+
 ### I2C Notes
 
 The default I2C address is 0x2A once resistor R1 is removed from the TM035035-2024's board to enable I2C operation. Doing so disables SPI operation. **Pull-up resistors are required for this trackpad!** - See my note in cirque_demo.ino. Other models may differ - one reference schematic does show 2.2kΩ pull-up resistors installed.
 
+![R1](assets/R1-resistor.png)
+
+Per [CirquePinnacle.readthedocs.io](https://cirquepinnacle.readthedocs.io/en/latest/) "you could change the I2C address from `0x2A` to `0x2C` by soldering a 470KΩ resistor at the junction labeled ADR [address], although this is untested".
+
+![ADR resistor](assets/ADR-resistor.png)
+
+You could also use an I2C [multiplexor](https://www.adafruit.com/product/2717) that allows you to switch the I2C buss between different devices with the same address.
+
 ### SPI Notes
 
 Unfortunately the latest code has not been tested with SPI because I converted my only trackpad to I2C (because  I'm so I2C-centric) not thinking that I'm the only person that would bother. The fact that there are no I2C pull-ups just adds to the futility of it all. But at least it still reads ... 0xFF - for everything - all the time. But I'm 98.3% sure it will work. I'll enlist the help of a tester that will hopefully give me the thumbs up, then I'll post an update.
+
+## Trackpad Models
+
+From [CirquePinnacle.readthedocs.io](https://cirquepinnacle.readthedocs.io/en/latest/).
+
+Model TMyyyxxx-202i-cco decomposes to:
+
+| Designator | Interpretation                                               |
+| :--------: | ------------------------------------------------------------ |
+|    yyy     | vertical width of the trackpad in millimeters                |
+|    xxx     | horizontal width of the trackpad in millimeters              |
+|     i      | interface: 3=I2C (470kΩ resistor at R1), 4=SPI               |
+|     cc     | Custom configuration: 00=standard (no resistor at R4), 03=certain features are disabled (470kΩ resistor at R4) |
+|     o      | overlay type: 0=none, 1=adhesive, 2=flat, 3=curved           |
+
+Cirque’s circle trackpads ship with the newer non-AG (Advanced Gestures) variant of the Pinnacle touch controller ASIC.
 
 ## example/../cirque_demo.ino
 
