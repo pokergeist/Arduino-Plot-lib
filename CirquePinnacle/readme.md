@@ -1,5 +1,11 @@
 # Cirque Pinnacle Arduino Lib
 
+## Status
+
+I'm working to resolve some coding errors - **DO NOT USE THE LIBRARY AT THIS TIME**.
+
+It mostly works by accident, but there are some needed fixes on the way. 
+
 ## Intro
 
 This library is meant to facilitate the use of a Cirque GlidePoint trackpad. In this case, specifically ones using the Gen3 (or Gen2?) Pinnacle ASIC.
@@ -47,6 +53,8 @@ Model TMyyyxxx-202i-cco decomposes to:
 |     o      | overlay type: 0=none, 1=adhesive, 2=flat, 3=curved           |
 
 Cirque’s circle trackpads ship with the newer non-AG (Advanced Gestures) variant of the Pinnacle touch controller ASIC.
+
+Mouser has excellent hi-res photos available on their search and product pages.
 
 ## example/../cirque_demo.ino
 
@@ -117,8 +125,14 @@ The constructors allow you to override default parameters that will be applied w
 | ScaleData()       | Scales data to desired X & Y resolution.                     |
 | Data_Ready()      | Check the Data Ready line for new data. If the DR lines is not wired, the DR flag in the Status register is checked. |
 | Invert_Y()        | Inverts the Y-Axis. Now better implemented with the c'tor override. |
-| Get_ID()          | Retrieves the chip and firmware version, and the product ID. |
+| Get_ID()          | Retrieves the chip and firmware version, and the product ID. (*) |
 | SetFlag()         | A utility routine for setting and clearing flags in a register word. |
+
+\* I could not find a lookup-table for any of these values. I get:
+
+```
+Chip ID:0x7 Firmware Version:0x3A Product ID:0x80
+```
 
 ## Credit Where Credit is Due
 
