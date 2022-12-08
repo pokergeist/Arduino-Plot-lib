@@ -146,6 +146,16 @@ enum pinnacle_register_t {
     DATA_MODE_ABS
   };
 
+  // sampling speed in samples/sec (and sample period)
+  enum pcl_speed_t {
+    pinnacle_sample_rate_100 = 0x64,  //  10.0ms
+    pinnacle_sample_rate_80  = 0x50,  //  12.5ms
+    pinnacle_sample_rate_60  = 0x3C,  //  16.7ms
+    pinnacle_sample_rate_40  = 0x28,  //  25.0ms
+    pinnacle_sample_rate_20  = 0x14,  //  50.0ms
+    pinnacle_sample_rate_10  = 0x0A   // 100.0ms
+  };
+
 class CirquePinnacle {
   // these vars hold c'tor overrides
   uint8_t z_idle_count;
@@ -155,6 +165,7 @@ class CirquePinnacle {
   bool    use_cfg_values;
   uint8_t cfg_feed1;
   uint8_t cfg_feed2;
+  pcl_speed_t cfg_speed = pinnacle_sample_rate_100;
 
   int8_t data_ready_pin;
   // absData_t touchData;
@@ -186,6 +197,7 @@ public:
   String Decode_Buttons(uint8_t buttonData);   // list active buttons
   // Set Config Register Values first then call begin() or Pinnacle_Init(disableFeed)
   void Set_Config_Values(uint8_t cfg_feed1, uint8_t cfg_feed2);
+  void Set_Speed(pcl_speed_t speed=pinnacle_sample_rate_100); // set the sampling speed
 
   static
   void SetFlag(uint8_t& value, uint8_t flag, bool test); // utility for setting and clearing register flags

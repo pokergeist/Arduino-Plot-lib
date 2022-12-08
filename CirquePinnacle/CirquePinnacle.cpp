@@ -47,6 +47,7 @@ void CirquePinnacle::Pinnacle_Init(void) {
   RAP_Write(PINNACLE_REG_Z_IDLE, z_idle_count);
     // set feed cfg 2 register value and apply
   uint8_t feed2 = (data_mode == DATA_MODE_ABS) ? PINNACLE_VAL_FEED2_CFG_ABS  : PINNACLE_VAL_FEED2_CFG_REL;
+  Set_Speed(cfg_speed);
   RAP_Write(PINNACLE_REG_FEED_CONFIG_2, feed2);
     // apply feed cfg 1 register value
   RAP_Write(PINNACLE_REG_FEED_CONFIG_1, feed1); // set feed enable last
@@ -61,6 +62,7 @@ void CirquePinnacle::Pinnacle_Init(bool disableFeed) {
   ClearFlags();
   // set z-idle packet count
   RAP_Write(PINNACLE_REG_Z_IDLE, z_idle_count);
+  Set_Speed(cfg_speed);
   // feed cfg 2
   RAP_Write(PINNACLE_REG_FEED_CONFIG_2, cfg_feed2);
   // feed cfg 1
@@ -191,6 +193,11 @@ void CirquePinnacle::Invert_Y(bool invert) {
   RAP_ReadBytes(PINNACLE_REG_FEED_CONFIG_1, &feed1, 1);
   SetFlag(feed1, PINNACLE_FLG_FEED1_Y_DATA_INVERT, invert);
   RAP_Write(PINNACLE_REG_FEED_CONFIG_1, feed1);
+}
+
+void CirquePinnacle::Set_Speed(pcl_speed_t speed) {
+  cfg_speed = speed;
+  RAP_Write(PINNACLE_REG_SAMPLE_RATE, cfg_speed);
 }
 
 void CirquePinnacle::Get_ID(uint8_t& chip_id, uint8_t& firmware_version, uint8_t& product_id) {

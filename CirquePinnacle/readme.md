@@ -10,12 +10,13 @@ The (known) existing bugs have been eliminated. Feel free to try the code.
 
 **Recent Changes**:
 
+* I added a Set_Speed() method to allow better synchronization with applications that will access the data at a slower rate that could provide better Relative data or more current Absolute data.
 * I added a Button_Decode() method the break out the button names for a good column-based disaply.
 * I added Set_Config_Values() to provided a better way to apply configuration setting. This is my preferred method of setting up the device though the user has to do a bit more work.
 
 ## Data Notification
 
-The Pinnacle provide a Data Ready (DR) signal either as a Status register flag (SW_DR) or as an active high hardware data line (HW_DR). The SW_DR flag sets the HW_DR line. You can either poll the I/O pin or the Data Ready flag in the Status register. You have to clear the DR flag in the Status register to drop the DR line  - neither DR signal is dropped on a data read. I'll test that later.  The  An interrupt service routine was considered by not deemed necessary for now.
+The Pinnacle provide a Data Ready (DR) signal either as a Status register flag (SW_DR) or as an active high hardware data line (HW_DR). The SW_DR flag sets the HW_DR line. You can either poll the I/O pin or the Data Ready flag in the Status register. You have to clear the DR flag in the Status register to drop the DR line  and enable the next data read. Neither DR signal is dropped on just a data read a data read like some devices. An interrupt driven model is in the works. to ensure that the latest Absolute data is available.
 
 ## Testing Hardware
 
@@ -116,6 +117,7 @@ The constructors allow you to override default parameters that will be applied w
 | -------------------------- | ------------------------------------------------------------ |
 | begin()                    | Because it's an Arduino thing.                               |
 | Set_Config_Values()        | Set the feed 1 and 2 config register values that will be used when begin() is called. |
+| Set_Speed()                | Allows you to set a sampling speed compatible with your application so you're not reading stale data. |
 | Pinnacle_Init()            | Called by begin() to set the configuration registers. This method uses pre-configured values modified by constructor overrides. |
 | Pinnacle_Init(disableFeed) | Called by begin() to set the configuration registers if the values have been set using Set_Config_Values(). |
 | GetAbsoluteData()          | Pass your structure by reference to get the latest Absolute dataset. |
@@ -148,7 +150,13 @@ I have to recognize the contributions of Cirque and to a greater extent Ryan You
 
 ## Timing
 
-With no delay() calls and the data feed running at the max rate of 100 samples/second (10ms), data acquisition is very responsive with most of the time spent waiting for new data. This is a measurement of the DR line spent high vs. low. This is using the slower I2C interface.<img src="assets/fast-read-metrics.png" alt="metrics" style="zoom:150%;" />
+With no delay() calls and the data feed running at the max rate of 100 samples/second (10ms), data acquisition is very responsive with most of the time spent waiting for new data. This is a measurement of the DR line spent high vs. low. This is using the slower I2C interface.
+
+If you're using a faster sampling speed than you application can handle, a new sample may be ready shortly after you read your data and clear the SW_DR flag. If you're using the default 10ms sampling period but you don't check the data but every 100ms, your data could be 90ms old. The next reading would have been latched by the DR flag until you get around to clearing it. It's better to sync the data reads to your application, particularly if you're reading Relative data.
+
+I'm working on an interrupt driven model that will fetch the data as soon as it's ready. It  would overwrite old data so it's better suited to Relative data unless a matching sampling speed was set. It supports multiple trackpads for MIDI use.
+
+<img src="assets/fast-read-metrics.png" alt="metrics" style="zoom:150%;" />
 
 and a scope trace (50ms divisions, Absolute data mode).
 
