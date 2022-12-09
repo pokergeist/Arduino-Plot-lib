@@ -53,7 +53,6 @@ relData_t trackpadRelData;
 void setup(void) {
   Serial.begin(9600);
   while (not Serial and millis() < 10e3); // wait up to 10secs for an open Console
-  trackpad.Set_Speed(pinnacle_sample_rate_10);
   setMyConfigVars();  // set my configuration parameters before begin() is called
 #ifdef USING_SPI
   trackpad.begin(CIRQUE_DATA_READY_PIN, SPI_SELECT_PIN, SPI_SPEED_MAX);
