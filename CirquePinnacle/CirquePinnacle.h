@@ -151,6 +151,7 @@ typedef struct {
     absData_t abs_data;
     relData_t rel_data;
   };
+  uint32_t timestamp_ms;
 } trackpad_data_t;
 
 #define CP_RAW_DATA_LEN  PINNACLE_TRACKPAD_ABS_DATA_LEN   // max data size

@@ -274,6 +274,7 @@ void CirquePinnacle::Read_Data_ISR(uint8_t myISRnum) {
   uint8_t pin_addr  = isr_data[myISRnum].pin_addr;
   // read the trackpad data
   isr_data[myISRnum].rap_read_cb(myISRnum, PINNACLE_REG_TRACKPAD_DATA, raw_data, data_len);
+  isr_data[myISRnum].trackpad_data_p->timestamp_ms = millis();
   // clear the data ready flag (and HW_DR line)
   isr_data[myISRnum].rap_write_cb(myISRnum, PINNACLE_REG_STATUS, PINNACLE_VAL_STATUS_CLEAR);
   // populate the users data structure

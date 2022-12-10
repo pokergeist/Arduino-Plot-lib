@@ -106,6 +106,49 @@ Data Ready is checked:
     * The trackpad is printed via local print_trackpad_data().
 * If there is no data, the program simply loops.
 
+## Trackpad Data
+
+Trackpad data is composed of an absData_t and a relData_t structure (union'ed) and a millisecond timestamp.
+
+```c++
+// decoded metrics
+typedef struct _absData {
+  uint16_t xValue;
+  uint16_t yValue;
+  uint16_t zValue;
+  uint8_t  buttonFlags;
+  bool     touchDown;
+} absData_t;
+
+typedef struct _relData {
+  uint8_t buttons;
+  int8_t x;
+  int8_t y;
+  int8_t scroll;
+} relData_t;
+
+typedef struct {
+  union {
+    absData_t abs_data;
+    relData_t rel_data;
+  };
+  uint32_t timestamp_ms;
+} trackpad_data_t;
+```
+
+Note that you can only access either Absolute or Relative data since they overlay each other. The one that matches your data_mode will be valid. The interpretation of the data in the other structure will not be valid.
+
+## Start_ISR()
+
+Start_ISR() populates ISR data and callback pointers and returns an enumerated cp_error_t value.
+
+Parameters are:
+
+* pin_address - either the SPI select **pin** or the I2C **address**. You can use:
+  * **(TPx_) PIN_ADDR** since it is set according to the interface selected, or
+  * **TP1_SPI_SELECT_PIN** or **CIRQUE_PINNACLE\_(DEFAULT)\_ADDR** as appropriate.
+* trackpadData - this is the trackpad_data_t structure for this trackpad, passed by reference.
+
 ## setMyConfigVars()
 
 CirqiePinnacle.h contains:
@@ -125,6 +168,49 @@ void setMyConfigVars(void) {
   cfg_feed2 = PINNACLE_FLG_FEED1_FEED_ENABLE; // all taps enabled
   trackpad1.Set_Config_Values(cfg_feed1, cfg_feed2);  // sets values and flag for Init call
 }
+```
+
+## Example Output
+
+Absolute data. No switches.
+
+```
+1004  1140  28  1  - - - - - -
+1004  1140  29  1  - - - - - -
+1004  1140  31  1  - - - - - -
+1004  1140  32  1  - - - - - -
+1003  1140  32  1  - - - - - -
+1002  1140  32  1  - - - - - -
+1001  1139  31  1  - - - - - -
+1001  1139  30  1  - - - - - -
+1001  1139  29  1  - - - - - -
+1000  1139  28  1  - - - - - -
+1000  1139  28  1  - - - - - -
+1001  1139  27  1  - - - - - -
+1004  1139  27  1  - - - - - -
+1008  1141  30  1  - - - - - -
+1014  1143  30  1  - - - - - -
+1020  1145  29  1  - - - - - -
+1027  1144  30  1  - - - - - -
+1035  1141  31  1  - - - - - -
+1044  1138  31  1  - - - - - -
+1053  1135  25  1  - - - - - -
+1063  1131  10  1  - - - - - -
+1072  1129  5   1  - - - - - -
+0     0     0   0  - - - - - -
+939   1133  27  1  - - - - - -
+939   1133  34  1  - - - - - -
+939   1133  35  1  - - - - - -
+939   1133  33  1  - - - - - -
+940   1132  32  1  - - - - - -
+942   1128  33  1  - - - - - -
+945   1122  29  1  - - - - - -
+950   1115  24  1  - - - - - -
+958   1107  15  1  - - - - - -
+966   1100  9   1  - - - - - -
+973   1096  6   1  - - - - - -
+979   1093  5   1  - - - - - -
+0     0     0   0  - - - - - -
 ```
 
 ## Notes From cirque_demo.ino

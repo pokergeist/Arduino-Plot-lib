@@ -10,7 +10,7 @@ The (known) existing bugs have been eliminated. Feel free to try the code.
 
 **Recent Changes**:
 
-* Major changes incurred by:
+* **Major changes** incurred by:
   * adding Interrupt Service Routines supporting up to (4) devices
   * joining the Absolute and Relative data decodes into one structure and unifying calls that were for separate data types.
   * general changes in the cirque_demo.ino sketch that support multiple trackpads, and comment blocks discussing SPI vs. I2C and ISR use. Separate READEME files will accompany the demo sketch and the CirquePinnacle library code.
