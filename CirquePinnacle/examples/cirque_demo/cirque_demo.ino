@@ -52,7 +52,7 @@
  *
  * ISR mode needs the physical DATA_READY_PIN to trigger the interrupt. There
  * is no provision for timer based interrupts at this time.
-z ****************************************************************************/
+ ****************************************************************************/
 
 /****************************************************************************
  * On Using SPI or I2C
