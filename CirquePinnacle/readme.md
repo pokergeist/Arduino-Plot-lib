@@ -10,6 +10,11 @@ The (known) existing bugs have been eliminated. Feel free to try the code.
 
 **Recent Changes**:
 
+* Major changes incurred by:
+  * adding Interrupt Service Routines supporting up to (4) devices
+  * joining the Absolute and Relative data decodes into one structure and unifying calls that were for separate data types.
+  * general changes in the cirque_demo.ino sketch that support multiple trackpads, and comment blocks discussing SPI vs. I2C and ISR use. Separate READEME files will accompany the demo sketch and the CirquePinnacle library code.
+
 * I added a Set_Speed() method to allow better synchronization with applications that will access the data at a slower rate that could provide better Relative data or more current Absolute data.
 * I added a Button_Decode() method the break out the button names for a good column-based disaply.
 * I added Set_Config_Values() to provided a better way to apply configuration setting. This is my preferred method of setting up the device though the user has to do a bit more work.
@@ -120,8 +125,10 @@ The constructors allow you to override default parameters that will be applied w
 | Set_Speed()                | Allows you to set a sampling speed compatible with your application so you're not reading stale data. |
 | Pinnacle_Init()            | Called by begin() to set the configuration registers. This method uses pre-configured values modified by constructor overrides. |
 | Pinnacle_Init(disableFeed) | Called by begin() to set the configuration registers if the values have been set using Set_Config_Values(). |
-| GetAbsoluteData()          | Pass your structure by reference to get the latest Absolute dataset. |
-| GetRelativeData()          | Pass your structure by reference to get the latest Relative dataset. |
+| Get_Data()                 | Pass your structure by reference to read and decode the latest dataset when not using an ISR. |
+| Start_ISR()                | Launch an Interrupt Service Routine to read and decode your data when available. |
+| Clear_DR()                 | Clear your Data Ready flag set by the ISR after a data update. |
+| End_ISR()                  | Disable ISR operation and resume polling.                    |
 | ClearFlags()               | Called frequently to clear the CC and DR flags in the Status Register. |
 | EnableFeed()               | Used to disable then re-enable the feed for certain operations. |
 | ERA_ReadBytes()            | Read bytes from an Extended Register Address.                |
@@ -132,6 +139,10 @@ The constructors allow you to override default parameters that will be applied w
 | Invert_Y()                 | Inverts the Y-Axis. Now better implemented with the c'tor override or the Set_Config_Values() method. |
 | Get_ID()                   | Retrieves the chip and firmware version, and the product ID. (*) |
 | Button_Decode              | Decodes the button status into a String for display.         |
+| **STATIC FUNCTIONS**       |                                                              |
+| Read_Data_ISR_0-4()        | ISRs bound to a unique ISR number that indexes a unique data structure. |
+| Read_Data_ISR()            | A common routine called by ISR_0-3 to read and decode the trackpad data. |
+| Decode_Data()              | Decodes the XYZ data from the raw data.                      |
 | SetFlag()                  | A utility routine for setting and clearing flags in a register word. |
 
 \* I could not find a lookup-table for any of these values. I get:
@@ -170,7 +181,7 @@ If your Arduino Library Manager stops finding the Steaming lib or you want to se
 
 ### Engineering Notation
 
-For timing and clock parameters I tend to use exponent notation, e.g., delay(5e3) for a 5 sec delay.
+For timing and clock parameters I tend to use exponent notation, e.g., delay(5e3) for a 5 second delay.
 
 ### Coding Style
 

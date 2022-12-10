@@ -7,6 +7,7 @@
  * My driver is quite simple compared to Ryan's. If you want to see more
  * comprehensive utilization of the hardware, please visit his repo.
  *
+ * 2022-12-10 - Added interrupt capability.
  * 2022-12-06 - Original.
  ****************************************************************************/
 
@@ -107,14 +108,6 @@ enum pinnacle_register_t {
 
 #define Z_IDLE_COUNT  5                 // default 30
 
-// feed sample rates
-#define PINNACLE_SAMPLE_RATE_100  0x64  // default 100 samples/sec
-#define PINNACLE_SAMPLE_RATE_80   0x50
-#define PINNACLE_SAMPLE_RATE_60   0x3C
-#define PINNACLE_SAMPLE_RATE_40   0x28
-#define PINNACLE_SAMPLE_RATE_20   0x14
-#define PINNACLE_SAMPLE_RATE_10   0x0A
-
 // Coordinate scaling values - FIXME - REVIEW!
 #define PINNACLE_XMAX     2047    // max value Pinnacle can report for X
 #define PINNACLE_YMAX     1535    // max value Pinnacle can report for Y
@@ -125,68 +118,105 @@ enum pinnacle_register_t {
 #define PINNACLE_X_RANGE  (PINNACLE_X_UPPER-PINNACLE_X_LOWER)
 #define PINNACLE_Y_RANGE  (PINNACLE_Y_UPPER-PINNACLE_Y_LOWER)
 
-  // decoded metrics
-  typedef struct _absData {
-    uint16_t xValue;
-    uint16_t yValue;
-    uint16_t zValue;
-    uint8_t  buttonFlags;
-    bool     touchDown;
-  } absData_t;
+// decoded metrics
+typedef struct _absData {
+  uint16_t xValue;
+  uint16_t yValue;
+  uint16_t zValue;
+  uint8_t  buttonFlags;
+  bool     touchDown;
+} absData_t;
 
-  typedef struct _relData {
-    uint8_t buttons;
-    int8_t x;
-    int8_t y;
-    int8_t scroll;
-  } relData_t;
+typedef struct _relData {
+  uint8_t buttons;
+  int8_t x;
+  int8_t y;
+  int8_t scroll;
+} relData_t;
 
-  enum data_mode_t {
-    DATA_MODE_REL,
-    DATA_MODE_ABS
+enum data_mode_t {
+  DATA_MODE_REL,
+  DATA_MODE_ABS
+};
+
+enum cp_error_t {
+  E_OKAY,
+  E_BAD_PIN,
+  E_OUT_OF_ISRS,
+  E_NOT_AN_INTERRUPT,
+};
+
+typedef struct {
+  union {
+    absData_t abs_data;
+    relData_t rel_data;
   };
+} trackpad_data_t;
 
-  // sampling speed in samples/sec (and sample period)
-  enum pcl_speed_t {
-    pinnacle_sample_rate_100 = 0x64,  //  10.0ms
-    pinnacle_sample_rate_80  = 0x50,  //  12.5ms
-    pinnacle_sample_rate_60  = 0x3C,  //  16.7ms
-    pinnacle_sample_rate_40  = 0x28,  //  25.0ms
-    pinnacle_sample_rate_20  = 0x14,  //  50.0ms
-    pinnacle_sample_rate_10  = 0x0A   // 100.0ms
-  };
+#define CP_RAW_DATA_LEN  PINNACLE_TRACKPAD_ABS_DATA_LEN   // max data size
+#define MAX_ISRS 4  // set the number of ISRs to support
+
+typedef void (*rap_read_f) (uint8_t isr_number, pinnacle_register_t register_addr, uint8_t* data, uint8_t count);
+typedef void (*rap_write_f)(uint8_t isr_number, pinnacle_register_t register_addr, uint8_t data);
+
+typedef struct _isr_data_t {
+  uint8_t  pin_addr;        // the SPI select pin or I2C address of device to read
+  uint8_t  spi_speed;       // the SPI select pin or I2C address of device to read
+  uint8_t  raw_data_len;    // the raw data length: ABS=6 or REL=4 - for decoder
+  uint8_t  raw_data[CP_RAW_DATA_LEN]; // raw data for this ISR
+  void*    user_data;       // the cooked abs or relData_t data
+  trackpad_data_t* trackpad_data_p; // make the caller's data structure available to the ISR
+  bool     data_ready;      // signal fresh data
+  rap_read_f  rap_read_cb;  // RAP read callback
+  rap_write_f rap_write_cb; // rap_write callback
+} isr_data_t;
+
+// sampling speed in samples/sec (and sample period)
+enum cp_speed_t {
+  SAMPLE_RATE_100 = 0x64,  //  10.0ms
+  SAMPLE_RATE_80  = 0x50,  //  12.5ms
+  SAMPLE_RATE_60  = 0x3C,  //  16.7ms
+  SAMPLE_RATE_40  = 0x28,  //  25.0ms
+  SAMPLE_RATE_20  = 0x14,  //  50.0ms
+  SAMPLE_RATE_10  = 0x0A   // 100.0ms
+};
 
 class CirquePinnacle {
   // these vars hold c'tor overrides
   uint8_t z_idle_count;
   bool    y_invert;
   bool    data_mode;
+
   // configuration register values
   bool    use_cfg_values;
   uint8_t cfg_feed1;
   uint8_t cfg_feed2;
-  pcl_speed_t cfg_speed = pinnacle_sample_rate_100;
+  cp_speed_t cfg_speed = SAMPLE_RATE_100;
 
-  int8_t data_ready_pin;
-  // absData_t touchData;
+  trackpad_data_t trackpad_data;  // holds the assembled abs or relData
+  int8_t  data_ready_pin; // the gpio pin wired to the trackpad's HW_DR line
+  bool    isr_in_use;     // ISR active, read its data ready flag
+  uint8_t my_isr_num;     // index into the isr_data table for this instance
+
+  virtual
+  void Set_RAP_Callbacks(uint8_t isr_number) = 0; // child classes set their callback pointers
 
   // interface specific virtual methods
   virtual
-  void RAP_ReadBytes(pinnacle_register_t address, uint8_t* data, uint8_t count) = 0;
+  void RAP_ReadBytes(pinnacle_register_t register_addr, uint8_t* data, uint8_t count) = 0;
   virtual
-  void RAP_Write    (pinnacle_register_t address, uint8_t data) = 0;
+  void RAP_Write(pinnacle_register_t register_addr, uint8_t data) = 0;
 
   void ERA_ReadBytes(uint16_t address, uint8_t * data, uint16_t count);
   void ERA_WriteByte(uint16_t address, uint8_t data);
 
 public:
-   CirquePinnacle(uint8_t z_idle_count=Z_IDLE_COUNT, data_mode_t data_mode=DATA_MODE_ABS, bool y_invert=false);
+   CirquePinnacle(data_mode_t data_mode, uint8_t z_idle_count=Z_IDLE_COUNT, bool y_invert=false);
   ~CirquePinnacle();
   uint8_t begin(int8_t data_ready_pin);     // sets attribues and calls Pinnacle_Init()
   void Pinnacle_Init(void);                 // sets configuration registers
   void Pinnacle_Init(bool disableFeed);     // sets configuration registers using Set_Config_* data
-  void GetAbsoluteData(absData_t& absData); // captures an Absolute data read
-  void GetRelativeData(relData_t& relData); // captures a Relative data read
+  void Get_Data(trackpad_data_t& trackpad_data); // read and decode trackpad data
   void ClearFlags();                        // clears command_complete and data_ready flags
   void EnableFeed(bool feedEnable);         // enables the data feed (signalled by data_ready)
   void ClipCoordinates(absData_t& coordinates);
@@ -197,10 +227,31 @@ public:
   String Decode_Buttons(uint8_t buttonData);   // list active buttons
   // Set Config Register Values first then call begin() or Pinnacle_Init(disableFeed)
   void Set_Config_Values(uint8_t cfg_feed1, uint8_t cfg_feed2);
-  void Set_Speed(pcl_speed_t speed=pinnacle_sample_rate_100); // set the sampling speed
+  void Set_Speed(cp_speed_t speed=SAMPLE_RATE_100); // set the sampling speed
+  // Interrupt Service Routines
+  cp_error_t Start_ISR(uint8_t pin_address, trackpad_data_t& trackpadData);
+  bool End_ISR(uint8_t isr_number);
+  void Clear_DR(void);
 
-  static
-  void SetFlag(uint8_t& value, uint8_t flag, bool test); // utility for setting and clearing register flags
+  /*
+   * Static methods
+   */
+  static void Read_Data_ISR(uint8_t myISRnum);
+  static void Read_Data_ISR_0(void);  // MAX_ISRS-many functions
+  static void Read_Data_ISR_1(void);
+  static void Read_Data_ISR_2(void);
+  static void Read_Data_ISR_3(void);
+  static void Decode_Data(uint8_t* raw_data, uint8_t data_len, trackpad_data_t& trackpad_data);
+
+  static void SetFlag(uint8_t& value, uint8_t flag, bool test); // utility for setting and clearing register flags
+
+  /*
+   * Static variables;
+   */
+
+  static uint8_t isr_enumerator;        // one-up number to enumerate the callback functions's data
+  static isr_data_t isr_data[MAX_ISRS];
+
 }; // class CirquePinnacle
 
 #endif // _H

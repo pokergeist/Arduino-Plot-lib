@@ -17,6 +17,7 @@ ClearFlags	KEYWORD2
 ClipCoordinates	KEYWORD2
 Data_Ready	KEYWORD2
 Decode_Buttons	KEYWORD2
+Decode_Data	KEYWORD2
 ERA_ReadBytes	KEYWORD2
 ERA_WriteByte	KEYWORD2
 EnableFeed	KEYWORD2
@@ -31,6 +32,8 @@ ScaleData	KEYWORD2
 Set_Config_Values	KEYWORD2
 Set_Speed	KEYWORD2
 SetFlag	KEYWORD2
+Start_ISR	KEYWORD2
+End_ISR	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
