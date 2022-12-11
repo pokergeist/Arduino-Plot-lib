@@ -170,6 +170,7 @@ typedef struct _isr_data_t {
   bool     data_ready;      // signal fresh data
   rap_read_f  rap_read_cb;  // RAP read callback
   rap_write_f rap_write_cb; // rap_write callback
+  bool     isr_in_use;      // this dataset is in use by ISR
 } isr_data_t;
 
 // sampling speed in samples/sec (and sample period)
@@ -197,7 +198,7 @@ class CirquePinnacle {
   trackpad_data_t trackpad_data;  // holds the assembled abs or relData
   int8_t  data_ready_pin; // the gpio pin wired to the trackpad's HW_DR line
   bool    isr_in_use;     // ISR active, read its data ready flag
-  uint8_t my_isr_num;     // index into the isr_data table for this instance
+  uint8_t my_isr_num = -1; // index into the isr_data table for this instance
 
   virtual
   void Set_RAP_Callbacks(uint8_t isr_number) = 0; // child classes set their callback pointers
@@ -215,6 +216,7 @@ public:
    CirquePinnacle(data_mode_t data_mode, uint8_t z_idle_count=Z_IDLE_COUNT, bool y_invert=false);
   ~CirquePinnacle();
   uint8_t begin(int8_t data_ready_pin);     // sets attribues and calls Pinnacle_Init()
+  void end(void);                           // disable the ISR
   void Pinnacle_Init(void);                 // sets configuration registers
   void Pinnacle_Init(bool disableFeed);     // sets configuration registers using Set_Config_* data
   void Get_Data(trackpad_data_t& trackpad_data); // read and decode trackpad data
@@ -231,7 +233,7 @@ public:
   void Set_Speed(cp_speed_t speed=SAMPLE_RATE_100); // set the sampling speed
   // Interrupt Service Routines
   cp_error_t Start_ISR(uint8_t pin_address, trackpad_data_t& trackpadData);
-  bool End_ISR(uint8_t isr_number);
+  void End_ISR(void);
   void Clear_DR(void);
 
   /*

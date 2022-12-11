@@ -17,13 +17,16 @@
  * Statuc variables
  */
 
-uint8_t    CirquePinnacle::isr_enumerator;    // one-up number to enumerate the instance read callback data
+uint8_t    CirquePinnacle::isr_enumerator; // one-up number to enumerate the instance read callback data
 isr_data_t CirquePinnacle::isr_data[MAX_ISRS];
 
 // 'tors
 CirquePinnacle::CirquePinnacle(data_mode_t dataMode, uint8_t zIdleCount,  bool yInvert)
   : data_mode(dataMode), z_idle_count(zIdleCount), y_invert(yInvert) { }
-CirquePinnacle::~CirquePinnacle() { }
+
+CirquePinnacle::~CirquePinnacle() {
+    end();
+  }
 
 void CirquePinnacle::Set_Config_Values(uint8_t cfgFeed1, uint8_t cfgFeed2) {
   cfg_feed1 = cfgFeed1;
@@ -40,6 +43,11 @@ uint8_t CirquePinnacle::begin(int8_t dataReadyPin) {
     Pinnacle_Init(); // use pre-configured values with c'tor overrides
   }
   return 0;
+}
+
+void CirquePinnacle::end(void) {
+  EnableFeed(false);
+  End_ISR();
 }
 
 // this init routine uses pre-configured values with c'tor overrides applied
@@ -204,13 +212,14 @@ void CirquePinnacle::Get_ID(uint8_t& chip_id, uint8_t& firmware_version, uint8_t
 
 cp_error_t CirquePinnacle::Start_ISR(uint8_t pin_addr, trackpad_data_t& trackpadData) {
   if (data_ready_pin < 0) return E_BAD_PIN; // no interrupt pin
-  if (isr_enumerator > MAX_ISRS) return E_OUT_OF_ISRS;  // too many ISRs - add callbacks
+  if (isr_enumerator >= MAX_ISRS) return E_OUT_OF_ISRS;  // too many ISRs - add callbacks
   my_isr_num = isr_enumerator++;
   isr_data[my_isr_num].pin_addr = pin_addr;     // the SPI select pin or I2C address
   isr_data[my_isr_num].raw_data_len =
       (data_mode == DATA_MODE_ABS) ? PINNACLE_TRACKPAD_ABS_DATA_LEN : PINNACLE_TRACKPAD_REL_DATA_LEN;
   isr_data[my_isr_num].trackpad_data_p = &trackpadData; // pointer to caller's data store
-  isr_data[my_isr_num].data_ready = false;      // set when the IRS has populated user data
+  isr_data[my_isr_num].isr_in_use = true;       // this ISR data is in use
+  isr_data[my_isr_num].data_ready = false;      // set when the ISR has populated user data
   Set_RAP_Callbacks(my_isr_num);                // child object sets the RAP callbacks in the ISR data
   isr_in_use = true;                            // check this data_ready flag
   voidFuncPtr theISR;
@@ -234,13 +243,18 @@ cp_error_t CirquePinnacle::Start_ISR(uint8_t pin_addr, trackpad_data_t& trackpad
   return E_OKAY;
 }
 
-bool CirquePinnacle::End_ISR(uint8_t isr_number) {
-  isr_in_use = false;                            // don't check this data_ready flag
-  if (data_ready_pin < 0) return true;
-  detachInterrupt(digitalPinToInterrupt(data_ready_pin));
-  return true;
+void CirquePinnacle::End_ISR(void) {
+  if (isr_in_use) {
+    detachInterrupt(digitalPinToInterrupt(data_ready_pin));
+    delay(10);
+    isr_data[my_isr_num].isr_in_use = false;
+    isr_in_use = false;
+    my_isr_num = -1;
+  }
 }
 
+// Clear the Data Ready flag set by the ISR.
+//  The Cirque's DR indicators are cleared by the ISR
 void CirquePinnacle::Clear_DR(void) {
   isr_data[my_isr_num].data_ready = false;
 }

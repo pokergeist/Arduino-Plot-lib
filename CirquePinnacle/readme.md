@@ -132,6 +132,7 @@ The constructors allow you to override default parameters that will be applied w
 | Method                     | Description                                                  |
 | -------------------------- | ------------------------------------------------------------ |
 | begin()                    | Because it's an Arduino thing.                               |
+| end()                      | Tears down ISR.                                              |
 | Set_Config_Values()        | Set the feed 1 and 2 config register values that will be used when begin() is called. |
 | Set_Speed()                | Allows you to set a sampling speed compatible with your application so you're not reading stale data. |
 | Pinnacle_Init()            | Called by begin() to set the configuration registers. This method uses pre-configured values modified by constructor overrides. |
