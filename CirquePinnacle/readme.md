@@ -108,7 +108,8 @@ data_mode_t data_mode = DATA_MODE_ABS;
 | CirquePinnacleSPI.cpp       | Contains the Register Access Protocol (RAP) methods using SPI. |
 | CirquePinnacleI2C.h         | Creates the child class CirquePinnacleI2C as an alternative to using SPI. |
 | CirquePinnacleI2C.cpp       | Contains the Register Access Protocol (RAP) methods using I2C. |
-| examples/../cirque_demo.ino | This is the example sketch that creates an instance of a CirquePinnacle child class, then polls the DR line, reads and prints the data. |
+| examples/../cirque_demo.ino | This **example sketch** creates an instance of a CirquePinnacle child class, then polls the DR line, reads and prints the data. |
+| examples/../cirque_plot.ino | This **example sketch** plot the Absolute or Relative data on the Arduino IDE's Serial Plotter (under Tools or Ctrl-Shift-L). |
 
 ## Library/Driver Code
 
