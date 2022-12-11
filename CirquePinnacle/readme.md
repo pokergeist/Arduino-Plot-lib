@@ -10,6 +10,8 @@ The (known) existing bugs have been eliminated. Feel free to try the code.
 
 **Recent Changes**:
 
+* I added the cirque_plot.ino sketch that plots your trackpad data so you can easily see the ranges and behavior of your trackpad.
+
 * **Major changes** incurred by:
   * adding Interrupt Service Routines supporting up to (4) devices
   * joining the Absolute and Relative data decodes into one structure and unifying calls that were for separate data types.
@@ -75,27 +77,35 @@ This example sketch will allow you to use either the SPI or I2C interface by cha
 // #define USING_I2C
 ```
 
-Next, define which pins are being used (if any).
+Next, set the SPI speed and which pins are being used.
 
 ```c++
 // for my QT Cirque board with an Adafruit QT Py (#4600) MCU and an FFC-12 connector
-#define SPI_SELECT_PIN           0
-#define CIRQUE_DATA_READY_PIN    1    // or -1 if not wired
-#define SPI_SPEED_MAX         10e6
+#define SPI_SPEED_MAX       10e6
+
+// for Trackpad 1 (TP1_)
+#define TP1_SPI_SELECT_PIN  0    // SPI chip/slave select pin
+#define TP1_DATA_READY_PIN  1    // or -1 if not wired (no ISR, uses SW_DR in Status register)
 ```
 
-|         Macro         | Description                                                  |
-| :-------------------: | ------------------------------------------------------------ |
-|    SPI_SELECT_PIN     | This is the SPI Slave/Chip Select output line that connects to the Pinnacle's SS line which enables the Pinnacle to communicate on the SPI buss. |
-| CIRQUE_DATA_READY_PIN | This is the pin connected to the Pinnacle's DR (/Data Ready) active low output that signals when new feed data is ready. If this pin is not wired set the value to -1 (<0) to check the Status register DR flag instead. |
-|     SPI_SPEED_MAX     | This is the SPI clock speed that will be used for SPI communications. 10Mbps seems to be a good speed for current microcontrollers. |
+|     Macro      | Description                                                  |
+| :------------: | ------------------------------------------------------------ |
+| SPI_SELECT_PIN | This is the SPI Slave/Chip Select output line that connects to the Pinnacle's SS line which enables the Pinnacle to communicate on the SPI buss. |
+| DATA_READY_PIN | This is the pin connected to the Pinnacle's DR (/Data Ready) active low output that signals when new feed data is ready. If this pin is not wired set the value to -1 (<0) to check the Status register DR flag instead. |
+| SPI_SPEED_MAX  | This is the SPI clock speed that will be used for SPI communications. 10Mbps seems to be a good speed for current microcontrollers. |
+
+Indicate if you want to use interrupts to read and decode the trackpad data. The Cirque's Data Ready line must be attached to a DATA_READY_PIN.
+
+```c++
+// True if using an Interrupt Service Routine (provided by CirquePinnacle)
+bool using_isr = true;
+```
 
 Both Absolute and Relative data modes are supported (but not concurrently at this time).
 
 ```c++
-// Select the preferred data mode
-data_mode_t data_mode = DATA_MODE_ABS;
-// data_mode_t data_mode = DATA_MODE_REL;
+// Select the preferred data mode, 1 or true for Absolute, 0 or false for Relative
+data_mode_t data_mode = (1) ? DATA_MODE_ABS : DATA_MODE_REL;
 ```
 
 ## Files
@@ -144,6 +154,7 @@ The constructors allow you to override default parameters that will be applied w
 | Read_Data_ISR_0-4()        | ISRs bound to a unique ISR number that indexes a unique data structure. |
 | Read_Data_ISR()            | A common routine called by ISR_0-3 to read and decode the trackpad data. |
 | Decode_Data()              | Decodes the XYZ data from the raw data.                      |
+| **UTILITY FUNCTIONS**      |                                                              |
 | SetFlag()                  | A utility routine for setting and clearing flags in a register word. |
 
 \* I could not find a lookup-table for any of these values. I get:
@@ -158,7 +169,7 @@ I have to recognize the contributions of Cirque and to a greater extent Ryan You
 
 ## ToDo
 
-* nothing pending
+* Code the destructor(s) to disable and free the ISR.
 
 ## Timing
 
@@ -186,4 +197,4 @@ For timing and clock parameters I tend to use exponent notation, e.g., delay(5e3
 
 ### Coding Style
 
-Yes, I like K&R style, aligned columns, mixed Camel-lower-whatever ...  I'm not going to run it through a code-uglifier just to make the robots happy. I have to look at this stuff.
+Yes, I like K&R style, aligned columns, mixed Camel-lower-whatever ...  I'm not going to run it through a code-uglifier just to make the robots happy. I have to look at this stuff.	
