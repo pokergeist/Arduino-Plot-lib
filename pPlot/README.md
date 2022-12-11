@@ -1,4 +1,4 @@
-# Arduino Plot(_pg) lib
+# Arduino pPlot lib
 
 The Plot class helps you generate and accumulate variable strings to be sent to the Arduino IDE's Serial Plotter.
 
@@ -13,7 +13,7 @@ The directory and .h files are named with the _pg suffix to hopefully avoid a na
 #### Usage:
 
 ``` c++
-#include <Plot_pg.h>
+#include <pPlot.h>
 
 Plot plot; // instantiate
 
