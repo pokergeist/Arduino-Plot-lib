@@ -4,7 +4,7 @@
  * 2022-12-06 - Original.
  ****************************************************************************/
 
-#include <CirquePinnacleI2C.h>
+#include <CirquePinnacle-I2C.h>
 
 CirquePinnacleI2C::CirquePinnacleI2C(data_mode_t dataMode, uint8_t zIdleCount,  bool yInvert)
       : CirquePinnacle(dataMode, zIdleCount, yInvert) { }

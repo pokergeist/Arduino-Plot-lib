@@ -76,10 +76,10 @@
  ****************************************************************************/
 
 #ifdef USING_SPI
-  #include <CirquePinnacleSPI.h>
+  #include <CirquePinnacle-SPI.h>
   #define TP1_PIN_ADDR  TP1_SPI_SELECT_PIN
 #else
-  #include <CirquePinnacleI2C.h>
+  #include <CirquePinnacle-I2C.h>
   #define TP1_PIN_ADDR  CIRQUE_PINNACLE_DEFAULT_ADDR
 #endif
 #include <Streaming.h>

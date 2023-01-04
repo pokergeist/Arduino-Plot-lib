@@ -114,10 +114,10 @@ data_mode_t data_mode = (1) ? DATA_MODE_ABS : DATA_MODE_REL;
 | --------------------------- | ------------------------------------------------------------ |
 | CirquePinnacle.h            | The header file for the CirquePinnacle base class. It contains the Register and Flag definitions, and a few common register settings. |
 | CirquePinnacle.cpp          | The implementation for everything except the interface code. |
-| CirquePinnacleSPI.h         | Creates the child class CirquePinnacleSPI that will be the one instantiated most likely. |
-| CirquePinnacleSPI.cpp       | Contains the Register Access Protocol (RAP) methods using SPI. |
-| CirquePinnacleI2C.h         | Creates the child class CirquePinnacleI2C as an alternative to using SPI. |
-| CirquePinnacleI2C.cpp       | Contains the Register Access Protocol (RAP) methods using I2C. |
+| CirquePinnacle-SPI.h        | Creates the child class CirquePinnacleSPI that will be the one instantiated most likely. |
+| CirquePinnacle-SPI.cpp      | Contains the Register Access Protocol (RAP) methods using SPI. |
+| CirquePinnacle-I2C.h        | Creates the child class CirquePinnacleI2C as an alternative to using SPI. |
+| CirquePinnacle-I2C.cpp      | Contains the Register Access Protocol (RAP) methods using I2C. |
 | examples/../cirque_demo.ino | This **example sketch** creates an instance of a CirquePinnacle child class, then polls the DR line, reads and prints the data. |
 | examples/../cirque_plot.ino | This **example sketch** plot the Absolute or Relative data on the Arduino IDE's Serial Plotter (under Tools or Ctrl-Shift-L). |
 
@@ -170,7 +170,7 @@ I have to recognize the contributions of Cirque and to a greater extent Ryan You
 
 ## ToDo
 
-* Code the destructor(s) to disable and free the ISR.
+* nothing pending
 
 ## Timing
 

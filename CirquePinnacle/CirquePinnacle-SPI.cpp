@@ -4,7 +4,7 @@
  * 2022-12-06 - Original.
  ****************************************************************************/
 
-#include <CirquePinnacleSPI.h>
+#include <CirquePinnacle-SPI.h>
 
 CirquePinnacleSPI::CirquePinnacleSPI(data_mode_t dataMode, uint8_t zIdleCount,  bool yInvert)
       : CirquePinnacle(dataMode, zIdleCount, yInvert) { }
