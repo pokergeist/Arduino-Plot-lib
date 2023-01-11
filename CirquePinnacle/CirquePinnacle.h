@@ -7,6 +7,7 @@
  * My driver is quite simple compared to Ryan's. If you want to see more
  * comprehensive utilization of the hardware, please visit his repo.
  *
+ * 2023-01-10 - Fixed isr_data.spi_speed size (!).
  * 2022-12-10 - Added interrupt capability.
  * 2022-12-06 - Original.
  ****************************************************************************/
@@ -16,8 +17,20 @@
 
 #include <Arduino.h>
 
+#define CP_MAX_SPI_SPEED      13e6      // up to 13 MHz unless exiting Sleep and Shutdown modes
+#define CP_DEFAULT_SPI_SPEED   8e6
+#define CP_DEFAULT_I2C_SPEED  100e3
+
 // Cirque's 7-bit I2C Slave Address
-#define CIRQUE_PINNACLE_DEFAULT_ADDR    0x2A
+#define CP_DEFAULT_I2C_ADDRESS   0x2A
+#define CP_ALTERNATE_I2C_ADDRESS 0x2C
+
+#ifdef USING_SPI
+  #define CP_DEFAULT_SPEED    CP_DEFAULT_SPI_SPEED
+#else
+  #define CP_DEFAULT_SPEED    CP_DEFAULT_I2C_SPEED
+#endif
+
 
 // register definitions w/ ReadOnly and default annotations
 enum pinnacle_register_t {
@@ -122,7 +135,7 @@ enum pinnacle_register_t {
 typedef struct _absData {
   uint16_t xValue;
   uint16_t yValue;
-  uint16_t zValue;
+  uint8_t  zValue;
   uint8_t  buttonFlags;
   bool     touchDown;
 } absData_t;
@@ -162,10 +175,9 @@ typedef void (*rap_write_f)(uint8_t isr_number, pinnacle_register_t register_add
 
 typedef struct _isr_data_t {
   uint8_t  pin_addr;        // the SPI select pin or I2C address of device to read
-  uint8_t  spi_speed;       // the SPI select pin or I2C address of device to read
+  uint32_t spi_speed;       // the SPI speed
   uint8_t  raw_data_len;    // the raw data length: ABS=6 or REL=4 - for decoder
   uint8_t  raw_data[CP_RAW_DATA_LEN]; // raw data for this ISR
-  void*    user_data;       // the cooked abs or relData_t data
   trackpad_data_t* trackpad_data_p; // make the caller's data structure available to the ISR
   bool     data_ready;      // signal fresh data
   rap_read_f  rap_read_cb;  // RAP read callback
@@ -212,19 +224,23 @@ class CirquePinnacle {
   void ERA_ReadBytes(uint16_t address, uint8_t * data, uint16_t count);
   void ERA_WriteByte(uint16_t address, uint8_t data);
 
+protected:
+  // sets attribues and calls Pinnacle_Init()
+  uint8_t begin(int8_t data_ready_pin);
+
 public:
    CirquePinnacle(data_mode_t data_mode, uint8_t z_idle_count=Z_IDLE_COUNT, bool y_invert=false);
   ~CirquePinnacle();
-  uint8_t begin(int8_t data_ready_pin);     // sets attribues and calls Pinnacle_Init()
+  virtual
   void end(void);                           // disable the ISR
   void Pinnacle_Init(void);                 // sets configuration registers
   void Pinnacle_Init(bool disableFeed);     // sets configuration registers using Set_Config_* data
   void Get_Data(trackpad_data_t& trackpad_data); // read and decode trackpad data
-  void ClearFlags();                        // clears command_complete and data_ready flags
+  void ClearFlags(void);                    // clears command_complete and data_ready flags
   void EnableFeed(bool feedEnable);         // enables the data feed (signalled by data_ready)
   void ClipCoordinates(absData_t& coordinates);
   void ScaleData(absData_t& coordinates, uint16_t xResolution, uint16_t yResolution);
-  bool Data_Ready();                        // check the data_ready line or status flag
+  bool Data_Ready(void);                    // check the data_ready line or status flag
   void Invert_Y(bool invert);               // invert the Absolute Y values (or set in c'tor)
   void Get_ID(uint8_t& chip_id, uint8_t& firmware_version, uint8_t& product_id);
   String Decode_Buttons(uint8_t buttonData);   // list active buttons

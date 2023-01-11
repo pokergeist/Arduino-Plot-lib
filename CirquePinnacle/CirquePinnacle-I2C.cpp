@@ -11,14 +11,15 @@ CirquePinnacleI2C::CirquePinnacleI2C(data_mode_t dataMode, uint8_t zIdleCount,  
 
 CirquePinnacleI2C::~CirquePinnacleI2C() { }
 
-uint8_t CirquePinnacleI2C::begin(int8_t dataReadyPin, uint8_t intf_address) {
-  i2c_addr = intf_address;
-  Wire.begin();
+uint8_t CirquePinnacleI2C::begin(int8_t dataReadyPin, int8_t i2c_address, uint32_t clockSpeed) {
+  CirquePinnacle::begin(dataReadyPin); // mod if other than 0 is ever returned
+  i2c_addr = i2c_address;              // otherwise, a fault implies I2C ping failure
+  Wire.begin(i2c_addr);
+  Wire.setClock(clockSpeed);
   // i2c ping
   Wire.beginTransmission(i2c_addr);
   int status = Wire.endTransmission();
-  if (status) return status;
-  return CirquePinnacle::begin(dataReadyPin);
+  return status;
 }
 
 /*  RAP Functions */

@@ -11,12 +11,10 @@
 #include <SPI.h>
 #include <CirquePinnacle.h>
 
-// Cirque's 7-bit I2C Slave Address
-#define CIRQUE_PINNACLE_DEFAULT_ADDR    0x2A
-
 class CirquePinnacleSPI : public virtual CirquePinnacle {
   uint8_t  select_pin;
   uint32_t spi_speed;
+  SPISettings spi_settings;
 
   void RAP_ReadBytes(pinnacle_register_t address, uint8_t* data, uint8_t count);
   void RAP_Write    (pinnacle_register_t address, uint8_t  data);
@@ -25,7 +23,8 @@ class CirquePinnacleSPI : public virtual CirquePinnacle {
 public:
    CirquePinnacleSPI(data_mode_t data_mode, uint8_t z_idle_count=Z_IDLE_COUNT, bool y_invert=false);
   ~CirquePinnacleSPI();
-  uint8_t begin(int8_t data_ready_pin, uint8_t select_pin, uint32_t spi_speed);
+
+  uint8_t begin(int8_t data_ready_pin, int8_t select_pin, uint32_t spi_speed);
 
   // static methods
   static void RAP_ReadBytes_INT(uint8_t isr_number, pinnacle_register_t address, uint8_t* data, uint8_t count);

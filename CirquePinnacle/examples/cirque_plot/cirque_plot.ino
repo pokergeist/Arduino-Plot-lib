@@ -18,18 +18,19 @@
 #define USING_SPI
 // #define USING_I2C
 
-// for my QT Cirque board with an Adafruit QT Py (#4600) MCU and an FFC-12 connector
-#define SPI_SPEED_MAX       10e6
+// for my QT Cirque board with an Adafruit QT Py SAMD21 (#4600) MCU and an FFC-12 connector
+#define CP_SPI_SPEED_MAX       10e6   // tested to 10 MHz, Pinnacle spec'd to 13 MHz
+#define CP_SPI_SPEED            4e6
 
 // for Trackpad 1 (TP1_)
 #define TP1_SPI_SELECT_PIN  0    // SPI chip/slave select pin
 #define TP1_DATA_READY_PIN  1    // or -1 if not wired (no ISR, uses SW_DR in Status register)
 
-#ifdef USING_SPI  
-  #include <CirquePinnacleSPI.h>
+#ifdef USING_SPI
+  #include <CirquePinnacle-SPI.h>
   #define TP1_PIN_ADDR  TP1_SPI_SELECT_PIN
 #else
-  #include <CirquePinnacleI2C.h>
+  #include <CirquePinnacle-I2C.h>
   #define TP1_PIN_ADDR  CIRQUE_PINNACLE_DEFAULT_ADDR
 #endif
 #include <Streaming.h>
@@ -59,11 +60,12 @@ void setup(void) {
   while (not Serial and millis() < 10e3); // wait up to 10secs for an open Console
   setMyConfigVars();  // set my configuration parameters before begin() is called
 #ifdef USING_SPI
-  trackpad1.begin(TP1_DATA_READY_PIN, TP1_SPI_SELECT_PIN, SPI_SPEED_MAX);
+  trackpad1.begin(TP1_DATA_READY_PIN, TP1_SPI_SELECT_PIN, CP_SPI_SPEED);
 #else
+  // I2C w/ ping
   uint8_t status = 7;
   while (status) {
-    status = trackpad1.begin(TP1_DATA_READY_PIN); // ,addr=default I2C address)
+    status = trackpad1.begin(TP1_DATA_READY_PIN, CP_DEFAULT_I2C_ADDRESS);
     if (status == 2) {
       Serial << "I2C address ACK error - trackpad1 not answering." << endl;
     } else if (status) {
@@ -72,6 +74,7 @@ void setup(void) {
     if (status) delay(5e3);
   }
 #endif
+
   // print_ID();
   if (using_isr) {
     cp_error_t e_status = trackpad1.Start_ISR(TP1_PIN_ADDR, trackpadData1);
@@ -96,7 +99,7 @@ void loop(void) {
 
     // this is probably for Absolute data - I haven't worked with it
     // trackpad1.ScaleData(trackpadAbsData, 1024, 1024);  // Scale coordinates to arbitrary X, Y resolution
-    
+
     plot_trackpad_data(trackpadData1);
   }
 } // loop()

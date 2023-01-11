@@ -11,10 +11,6 @@
 #include <Wire.h>
 #include <CirquePinnacle.h>
 
-// Cirque's 7-bit I2C Slave Address
-#define CIRQUE_PINNACLE_DEFAULT_I2C_ADDRESS   0x2A
-#define CIRQUE_PINNACLE_ALTERNATE_I2C_ADDRESS 0x2C
-
 class CirquePinnacleI2C : public virtual CirquePinnacle {
   uint8_t i2c_addr;
 
@@ -25,7 +21,8 @@ class CirquePinnacleI2C : public virtual CirquePinnacle {
 public:
    CirquePinnacleI2C(data_mode_t data_mode, uint8_t z_idle_count=Z_IDLE_COUNT, bool y_invert=false);
   ~CirquePinnacleI2C();
-  uint8_t begin(int8_t dataReadyPin, uint8_t address=CIRQUE_PINNACLE_DEFAULT_I2C_ADDRESS);
+
+  uint8_t begin(int8_t dataReadyPin, int8_t i2c_addr, uint32_t clockSpeed=CP_DEFAULT_SPEED);
 
   // static methods
   static void RAP_ReadBytes_INT(uint8_t isr_number, pinnacle_register_t address, uint8_t* data, uint8_t count);

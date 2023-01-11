@@ -47,7 +47,32 @@ You could also use an I2C [multiplexor](https://www.adafruit.com/product/2717) t
 
 ### SPI Notes
 
-Unfortunately the latest code has not been tested with SPI because I converted my only trackpad to I2C (because  I'm so I2C-centric) not thinking that I'm the only person that would bother. The fact that there are no I2C pull-ups just adds to the futility of it all. But at least it still reads ... 0xFF - for everything - all the time. But I'm 98.3% sure it will work. I'll enlist the help of a tester that will hopefully give me the thumbs up, then I'll post an update.
+I finally got the new trackpads so I could test the SPI interface. The biggest gotcha was storing the SPI clock speed in a u8. Pretty obvious when I finally saw it.
+
+SPI interface specs:
+
+* most significant bit (MSB) first
+* speed up to 13 MHz unless:
+   "Request additional instructions from Cirque for exiting Sleep and Shutdown modes if your application requires SPI at 1 MHz or greater."
+
+### FFC-12 Pinout
+
+For the GlidePoint Circular Trackpad, pin 1 (*****) of the Flexible Flat Cable is leftmost on the connector, when  the trackpad rotated so that the FFC connector is on the bottom - like in the photo above. My oldest trackpad has a black "Sharpie" mark on the left - newer ones are marked on the right like shown above. Note that the VDD and GND pads are on the right, closest to their FFC counterparts.
+
+|   Pin   | Signal     | Description                       |
+| :-----: | ---------- | --------------------------------- |
+| ***** 1 | SCK        | SPI Clock (FAR LEFT)              |
+|    2    | MISO       | SPI Master In, Slave Out          |
+|    3    | /SS        | SPI Slave/Chip Select, active low |
+|    4    | DR         | Data Ready                        |
+|    5    | MOSI       | SPI Master Out, Slave In          |
+|    6    | BTN2       | Button 2                          |
+|    7    | BTN3       | Button 3                          |
+|    8    | BTN1       | Button 1                          |
+|    9    | SCL        | I2C Clock                         |
+|   10    | SDA        | I2C Data                          |
+|   11    | GND        | Ground                            |
+|   12    | 3.3V / Vdd | Power, 3.3V (FAR RIGHT)           |
 
 ## Trackpad Models
 
@@ -91,7 +116,7 @@ Next, set the SPI speed and which pins are being used.
 |     Macro      | Description                                                  |
 | :------------: | ------------------------------------------------------------ |
 | SPI_SELECT_PIN | This is the SPI Slave/Chip Select output line that connects to the Pinnacle's SS line which enables the Pinnacle to communicate on the SPI buss. |
-| DATA_READY_PIN | This is the pin connected to the Pinnacle's DR (/Data Ready) active low output that signals when new feed data is ready. If this pin is not wired set the value to -1 (<0) to check the Status register DR flag instead. |
+| DATA_READY_PIN | This is the pin connected to the Pinnacle's DR (Data Ready) output that signals when new feed data is ready. If this pin is not wired set the value to -1 (<0) to check the Status register DR flag instead. |
 | SPI_SPEED_MAX  | This is the SPI clock speed that will be used for SPI communications. 10Mbps seems to be a good speed for current microcontrollers. |
 
 Indicate if you want to use interrupts to read and decode the trackpad data. The Cirque's Data Ready line must be attached to a DATA_READY_PIN.
