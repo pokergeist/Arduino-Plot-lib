@@ -6,6 +6,10 @@ This library is meant to facilitate the use of a Cirque GlidePoint trackpad. In 
 
 ## Status
 
+|    Date    | Status                                               |
+| :--------: | ---------------------------------------------------- |
+| 2023-01-11 | Fixed SPI interface. Working on new interface board. |
+
 The (known) existing bugs have been eliminated. Feel free to try the code.
 
 **Recent Changes**:
@@ -57,7 +61,7 @@ SPI interface specs:
 
 ### FFC-12 Pinout
 
-For the GlidePoint Circular Trackpad, pin 1 (*****) of the Flexible Flat Cable is leftmost on the connector, when  the trackpad rotated so that the FFC connector is on the bottom - like in the photo above. My oldest trackpad has a black "Sharpie" mark on the left - newer ones are marked on the right like shown above. Note that the VDD and GND pads are on the right, closest to their FFC counterparts.
+For the GlidePoint Circular Trackpad, pin 1 (*****) of the Flexible Flat Cable is leftmost on the connector, when  the trackpad rotated so that the FFC connector is on the bottom - like in the photo above. My oldest trackpad has a black "Sharpie" mark on the left - newer ones are marked on the right like shown above. Note that the VDD and GND pads are on the right, closest to their FFC counterparts. The FFC pads go toward the bottom of the GlidePoint connector.
 
 |   Pin   | Signal     | Description                       |
 | :-----: | ---------- | --------------------------------- |
@@ -66,13 +70,15 @@ For the GlidePoint Circular Trackpad, pin 1 (*****) of the Flexible Flat Cable i
 |    3    | /SS        | SPI Slave/Chip Select, active low |
 |    4    | DR         | Data Ready                        |
 |    5    | MOSI       | SPI Master Out, Slave In          |
-|    6    | BTN2       | Button 2                          |
-|    7    | BTN3       | Button 3                          |
-|    8    | BTN1       | Button 1                          |
+|    6    | BTN2       | Button 2 (Note 1)                 |
+|    7    | BTN3       | Button 3 (Note 1)                 |
+|    8    | BTN1       | Button 1 (Note 1)                 |
 |    9    | SCL        | I2C Clock                         |
 |   10    | SDA        | I2C Data                          |
 |   11    | GND        | Ground                            |
 |   12    | 3.3V / Vdd | Power, 3.3V (FAR RIGHT)           |
+
+**Note 1**: The button interface data is sparce but implys that either a physical button can be pressed or an touchpad region can be pressed.
 
 ## Trackpad Models
 
@@ -113,11 +119,11 @@ Next, set the SPI speed and which pins are being used.
 #define TP1_DATA_READY_PIN  1    // or -1 if not wired (no ISR, uses SW_DR in Status register)
 ```
 
-|     Macro      | Description                                                  |
-| :------------: | ------------------------------------------------------------ |
-| SPI_SELECT_PIN | This is the SPI Slave/Chip Select output line that connects to the Pinnacle's SS line which enables the Pinnacle to communicate on the SPI buss. |
-| DATA_READY_PIN | This is the pin connected to the Pinnacle's DR (Data Ready) output that signals when new feed data is ready. If this pin is not wired set the value to -1 (<0) to check the Status register DR flag instead. |
-| SPI_SPEED_MAX  | This is the SPI clock speed that will be used for SPI communications. 10Mbps seems to be a good speed for current microcontrollers. |
+|       Macro        | Description                                                  |
+| :----------------: | ------------------------------------------------------------ |
+| TP1_SPI_SELECT_PIN | This is the SPI Slave/Chip Select output line that connects to the Pinnacle's SS line which enables the Pinnacle to communicate on the SPI buss. |
+| TP1_DATA_READY_PIN | This is the pin connected to the Pinnacle's DR (Data Ready) output that signals when new feed data is ready. If this pin is not wired set the value to -1 (<0) to check the Status register DR flag instead. |
+|    CP_SPI_SPEED    | This is the SPI clock speed that will be used for SPI communications. 10Mbps seems to be a good speed for current microcontrollers. |
 
 Indicate if you want to use interrupts to read and decode the trackpad data. The Cirque's Data Ready line must be attached to a DATA_READY_PIN.
 
